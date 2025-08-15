@@ -92,24 +92,15 @@ def _fetch_and_process_data():
         df['Status'] = df.apply(derive_status, axis=1)
 
         # --- Cálculos das Estatísticas ---
-        stats = {
-            'total_jogos': len(df),
-            'total_horas_jogadas': int(df['Tempo de Jogo'].sum()),
-            'custo_total_biblioteca': float(df['Preço'].sum()),
-            'media_notas': round(df['Nota'].mean(), 2) if df['Nota'].notna().any() else 0,
-            'total_finalizados': int((df['Status'] == 'Finalizado').sum()),
-            'total_platinados': int(df[df['Platinado?'] == 'Sim']['Platinado?'].count()),
-            # --- NOVA LINHA ADICIONADA ---
-            'total_na_fila': int((df['Status'] == 'Na Fila').sum())
-        }        
-        # stats = {
-        #     'total_jogos': len(df),
-        #     'total_horas_jogadas': int(df['Tempo de Jogo'].sum()),
-        #     'custo_total_biblioteca': float(df['Preço'].sum()),
-        #     'media_notas': round(df['Nota'].mean(), 2) if df['Nota'].notna().any() else 0,
-        #     'total_finalizados': int((df['Status'] == 'Finalizado').sum()),
-        #     'total_platinados': int(df[df['Platinado?'] == 'Sim']['Platinado?'].count())
-        # }
+stats = {
+    'total_jogos': len(df),
+    'total_horas_jogadas': int(df['Tempo de Jogo'].sum()),
+    'custo_total_biblioteca': float(df['Preço'].sum()),
+    'media_notas': round(df['Nota'].mean(), 2) if df['Nota'].notna().any() else 0,
+    'total_finalizados': int((df['Status'] == 'Finalizado').sum()),
+    'total_platinados': int(df[df['Platinado?'] == 'Sim']['Platinado?'].count()),
+    'total_na_fila': int((df['Status'] == 'Na Fila').sum()) 
+}     
         
         # --- Lógica para Múltiplos Estilos ---
         # 1. Cria um dataframe temporário apenas com a coluna de Estilo e remove linhas vazias
