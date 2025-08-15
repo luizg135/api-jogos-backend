@@ -42,17 +42,19 @@ def clean_rating(value):
         return None
 
 def derive_status(row):
-    """Define o status do jogo baseado em outras colunas."""
+    """Define o status do jogo baseado em outras colunas, com prioridade para Platina."""
     if pd.notna(row['Abandonado?']) and 'Sim' in str(row['Abandonado?']):
         return 'Abandonado'
-    if pd.notna(row['Terminado em']) or (pd.notna(row['Conclusão']) and '100' in str(row['Conclusão'])):
-        return 'Finalizado'
+    # --- CORREÇÃO DE LÓGICA ---
+    # A verificação de Platina agora vem ANTES de Finalizado.
     if pd.notna(row['Platinado?']) and 'Sim' in str(row['Platinado?']):
         return 'Platinado'
+    if pd.notna(row['Terminado em']) or (pd.notna(row['Conclusão']) and '100' in str(row['Conclusão'])):
+        return 'Finalizado'
+    # --- FIM DA CORREÇÃO ---
     if pd.notna(row['Início em']):
         return 'Jogando'
     return 'Na Fila' # Backlog
-
 
 def _fetch_and_process_data():
     """Busca e processa os dados da planilha de jogos."""
