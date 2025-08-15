@@ -68,62 +68,45 @@ def _fetch_and_process_data():
 
         df = pd.read_csv(BytesIO(response.content), header=1, encoding='utf-8')
         
-        # Define os nomes das colunas conforme sua planilha (13 colunas de B a N)
         colunas = [
             'Nome', 'Plataforma', 'Nota', 'Preço', 'Estilo', 'Adquirido em', 
             'Início em', 'Terminado em', 'Conclusão', 'Tempo de Jogo', 
             'Conquistas Obtidas', 'Platinado?', 'Abandonado?'
         ]
-        # Pega as colunas de B em diante
         df = df.iloc[:, 1:14]
         df.columns = colunas
 
-        # Limpeza e transformação dos dados
-        df.dropna(subset=['Nome'], inplace=True) # Remove linhas sem nome de jogo
+        df.dropna(subset=['Nome'], inplace=True)
         df['Preço'] = df['Preço'].apply(clean_currency)
         df['Tempo de Jogo'] = df['Tempo de Jogo'].apply(clean_hours)
         df['Nota'] = df['Nota'].apply(clean_rating)
         
-        # Converte datas, tratando erros
         for col in ['Adquirido em', 'Início em', 'Terminado em']:
             df[col] = pd.to_datetime(df[col], format='%d/%m/%Y', errors='coerce')
 
-        # Deriva a coluna "Status" com base na nossa lógica
         df['Status'] = df.apply(derive_status, axis=1)
 
-        # --- Cálculos das Estatísticas ---
-stats = {
-    'total_jogos': len(df),
-    'total_horas_jogadas': int(df['Tempo de Jogo'].sum()),
-    'custo_total_biblioteca': float(df['Preço'].sum()),
-    'media_notas': round(df['Nota'].mean(), 2) if df['Nota'].notna().any() else 0,
-    'total_finalizados': int((df['Status'] == 'Finalizado').sum()),
-    'total_platinados': int(df[df['Platinado?'] == 'Sim']['Platinado?'].count()),
-    'total_na_fila': int((df['Status'] == 'Na Fila').sum()) 
-}     
+        stats = {
+            'total_jogos': len(df),
+            'total_horas_jogadas': int(df['Tempo de Jogo'].sum()),
+            'custo_total_biblioteca': float(df['Preço'].sum()),
+            'media_notas': round(df['Nota'].mean(), 2) if df['Nota'].notna().any() else 0,
+            'total_finalizados': int((df['Status'] == 'Finalizado').sum()),
+            'total_platinados': int(df[df['Platinado?'] == 'Sim']['Platinado?'].count()),
+            'total_na_fila': int((df['Status'] == 'Na Fila').sum())
+        }
         
-        # --- Lógica para Múltiplos Estilos ---
-        # 1. Cria um dataframe temporário apenas com a coluna de Estilo e remove linhas vazias
         df_estilos = df[['Estilo']].copy().dropna(subset=['Estilo'])
-        
-        # 2. Separa a string de estilos em uma lista, removendo espaços extras
-        # Ex: "Metroidvania, Soulslike" -> ['Metroidvania', 'Soulslike']
         df_estilos['Estilo'] = df_estilos['Estilo'].str.split(',').apply(lambda x: [i.strip() for i in x])
-        
-        # 3. "Explode" o dataframe: cria uma nova linha para cada estilo na lista
         df_estilos = df_estilos.explode('Estilo')
-        
-        # 4. Agora, faz a contagem dos valores individuais
         jogos_por_estilo = df_estilos['Estilo'].value_counts().to_dict()
-        # --- Fim da Lógica de Estilos ---
 
         charts_data = {
             'jogos_por_status': df['Status'].value_counts().to_dict(),
             'jogos_por_plataforma': df['Plataforma'].value_counts().to_dict(),
-            'jogos_por_estilo': jogos_por_estilo # <-- Adiciona o novo cálculo
+            'jogos_por_estilo': jogos_por_estilo
         }
 
-        # Converte o DataFrame para um formato JSON amigável
         jogos_list = json.loads(df.to_json(orient='records', date_format='iso'))
 
         dados_finais = {
